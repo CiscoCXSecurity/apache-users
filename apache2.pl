@@ -14,7 +14,7 @@ Usage:  ./apache2.pl [-h host] [-p port] [-l dictionary] [-e response code] [-s 
 
 =head1 AUTHOR
 
-Copyright � 18-08-2008 Andy@Portcullis email:tools@portcullis-security.com
+Copyright � 11-09-2008 Andy@Portcullis email:tools@portcullis-security.com
 New code base dirived from orginal code apache.pl v1.0 by Doc
 
 =cut
@@ -89,14 +89,17 @@ if (exists $opts{t}){
      $threads=$opts{t};
 }else{$threads=1;}
 
-if($ssl==0){
     $main_loop=new Parallel::ForkManager($threads);
     open (LIST, "<$list") or die "Unable to open $list ....$!";
     foreach $name (<LIST>) { 
         $main_loop->start and next;
 	chomp $name;
 	$page="~".$name.'/';
-	$url = 'http://'.$host.':'.$port.'/'.$page;
+	if ($ssl==0){
+		$url = 'http://'.$host.':'.$port.'/'.$page;
+	}else{
+		$url = 'https://'.$host.':'.$port.'/'.$page;
+	}
 	$browser = LWP::UserAgent->new;
 	$browser->agent("ApacheUser/2.0");
 	$response = $browser->get($url);
@@ -107,26 +110,7 @@ if($ssl==0){
 	$main_loop->finish;
      }
      $main_loop->wait_all_children;
-}else{
-    $main_loop=new Parallel::ForkManager($threads);
-    open (LIST, "<$list") or die "Unable to open $list ....$!";
-    foreach $name (<LIST>) { 
-        $main_loop->start and next;
-	chomp $name;
-	$page="~".$name.'/';
-	$url = 'https://'.$host.':'.$port.'/'.$page;   # Yes, HTTPS!
-	$browser = LWP::UserAgent->new;
-	$browser->agent("ApacheUser/2.0");
-	$response = $browser->get($url);
-	#print $response->status_line."\n";
-	if ( $response->status_line =~/($num)/g ) {	  
-	    print "$name exists on $host\n";
-	}
-	$main_loop->finish;
-     }
-     $main_loop->wait_all_children;
-}
-print "Execution ". (time - $^T) . " seconds!\n";
+print "Execution time: ". (time - $^T) . " seconds!\n";
 close LIST;
 exit 1;
 
